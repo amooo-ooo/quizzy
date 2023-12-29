@@ -1,6 +1,5 @@
 from pathlib import Path
 from functools import partial
-from datetime import datetime
 import random
 import json
 import sys
@@ -37,9 +36,9 @@ class Window(QMainWindow):
     with open(Path(Path(__file__).parent, "opentdb.json"), "r") as f:
         OPENTDB_API = json.loads(f.read())
 
-    def __init__(self, api: str = "http://127.0.0.1:5000") -> None:
+    def __init__(self, api: str) -> None:
         super().__init__()
-        self.screen_size = QApplication.primaryScreen().size()
+        #self.screen_size = QApplication.primaryScreen().size()
         self.path = "Home"
         self.api = api
 
@@ -52,7 +51,7 @@ class Window(QMainWindow):
 
         icons_dir_path = Path(Path(__file__).parent, "icons")
         self.setWindowIcon(QIcon(str(Path(icons_dir_path, "home.png"))))
-
+        
         fonts = ["Aspekta-400.otf", "Aspekta-500.otf"]
         for font in fonts:
             fontpath = str(Path(Path(__file__).parent, "fonts", font))
@@ -68,11 +67,13 @@ class Window(QMainWindow):
         central_widget.setLayout(self.stacked_layout)
         self.setCentralWidget(central_widget)
 
+        #self.showMaximized()
         stylepath = Path(Path(__file__).parent, "styles", "body.css")
         with open(stylepath, "r") as f:
             self.css = f.read()
             central_widget.setStyleSheet(self.css)
 
+        central_widget.showMaximized()
 
     def _init_generate_quizzes_page(self) -> QWidget:
         main = QWidget()
@@ -441,7 +442,7 @@ class Window(QMainWindow):
         ui_layout = QVBoxLayout()
         ui_layout.setSpacing(0)
 
-        heading = QLabel("Log in")
+        heading = QLabel("Log In")
         heading.setObjectName("heading")
         #ui_layout.addWidget(heading)
 
@@ -509,13 +510,24 @@ class Window(QMainWindow):
             print("Missing fields")
             return None
         
-        user = login(name, password)
+        user, message = login(name, password)
+        if not user:
+            QMessageBox.information(
+                self, "Log In", message
+            )
+            return
+
+
         self.api_key = user["api_key"]
         self.user = user["profile"]
         if self.api_key:
             headers = {"X-API-Key": self.api_key, 'Content-Type': 'application/json'}
             response = requests.get(f'{self.api}/get_score', headers=headers)
             self.user_score = response.json()["score"]
+        else:
+            QMessageBox.information(
+                self, "Offline Mode", "Unable to connect to back-end API. Switching to Offline Mode. Some features may be restricted."
+            )
 
         self.stacked_layout.addWidget(self._create_main_page())
         first_widget = self.stacked_layout.itemAt(0).widget()
@@ -533,7 +545,7 @@ class Window(QMainWindow):
             ui_layout = QVBoxLayout()
             ui_layout.setSpacing(0)
 
-            heading = QLabel("Sign up")
+            heading = QLabel("Sign Up")
             heading.setObjectName("heading")
             #ui_layout.addWidget(heading)
 
@@ -607,13 +619,24 @@ class Window(QMainWindow):
             print("Missing fields")
             return None
         
-        user = signUp(name, password, team)
+        user, message = signUp(name, password, team)
+
+        if not user:
+            QMessageBox.information(
+                self, "Sign Up", message
+            )
+            return
+
         self.api_key = user["api_key"]
         self.user = user["profile"]
         if self.api_key:
             headers = {"X-API-Key": self.api_key, 'Content-Type': 'application/json'}
             response = requests.get(f'{self.api}/get_score', headers=headers)
             self.user_score = response.json()["score"]
+        else:
+            QMessageBox.information(
+                self, "Offline Mode", "Unable to connect to back-end API. Switching to Offline Mode. Some features may be restricted."
+            )
 
         self.stacked_layout.addWidget(self._create_main_page())
         first_widget = self.stacked_layout.itemAt(0).widget()
@@ -796,15 +819,6 @@ class Window(QMainWindow):
         logout.clicked.connect(self.close)
         layout.addWidget(logout)
 
-        # Load the image with QPixmap
-        logo_button = QPushButton()
-        logo_button.setCursor(QCursor(Qt.PointingHandCursor))
-        logo_button.setIcon(QIcon(str(Path(Path(__file__).parent, "settings.png"))))
-        logo_button.setIconSize(QSize(36, 36))
-        logo_button.setObjectName("logo")
-        logo_button.clicked.connect(self._back_to_main)
-        layout.addWidget(logo_button)
-
         stylepath = Path(Path(__file__).parent, "styles", "navbar.css")
         with open(stylepath, "r") as f:
             self.setStyleSheet(f.read())
@@ -905,10 +919,11 @@ class Window(QMainWindow):
         main_layout = QVBoxLayout()
 
         if not infinite:
-            score = QLabel(f"You scored {self.score}/{len(self.active_quiz)}.")
+            score = QLabel(f"You scored {self.score}/{len(self.active_quiz)}")
         else:
-            score = QLabel(f"You scored {self.score}.")
-        main_layout.addWidget(score)
+            score = QLabel(f"You scored {self.score}")
+        score.setObjectName("heading")
+        main_layout.addWidget(score, alignment=Qt.AlignCenter)
 
         back = QPushButton(f"Back")
         back.setCursor(QCursor(Qt.PointingHandCursor))
@@ -1254,9 +1269,9 @@ class QCard(QWidget):
         super().mousePressEvent(event)
 
 
-def main() -> None:
+def main(host: str) -> None:
     """Main function"""
     app = QApplication(sys.argv)
-    window = Window()
+    window = Window(host)
     window.showMaximized()
     sys.exit(app.exec())

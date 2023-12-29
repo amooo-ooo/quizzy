@@ -1,6 +1,4 @@
-import random
 from pathlib import Path
-import requests
 import json
 import os
 from werkzeug.security import generate_password_hash, check_password_hash

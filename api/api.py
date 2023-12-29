@@ -7,10 +7,24 @@ import uuid
 from pathlib import Path
 import json
 import src.server as auth
+import sys
+import argparse
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(24))
 CORS(app)
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--logfile', type=bool, default=False, help='Instead of printing logs onto the terminal, log into file.')
+args = parser.parse_args()
+
+if args.logfile:
+    log_file = open('log.txt', 'wt')
+    sys.stdout = sys.stderr = log_file
+
+    @app.teardown_appcontext
+    def close_log_file(error):
+        log_file.close()
 
 API_KEYS_DIR = Path(Path(__file__).parent, "src", "valid_api_keys.json")
 with open(API_KEYS_DIR, "r") as f:

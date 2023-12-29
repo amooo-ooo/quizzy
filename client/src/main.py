@@ -43,7 +43,7 @@ class Profile:
             with open(Path(DEFAULT_DIR, "recents.json"), "r") as default_recents:
                 user_recents.write(default_recents.read())
 
-def signUp(name: str, password: str, team: str, api: str = "http://127.0.0.1:5000") -> Path | None:
+def signUp(name: str, password: str, team: str, api: str = "http://127.0.0.1:5000") -> (dict, str) or (None, str):
     headers = {'Content-Type': 'application/json'}
     data = { 'name': name, 'password': password, 'team': team }
     
@@ -51,18 +51,19 @@ def signUp(name: str, password: str, team: str, api: str = "http://127.0.0.1:500
         response = requests.post(f'{api}/signup', data=json.dumps(data), headers=headers)
         api_key = response.json()["api_key"]
         online = True
-    except requests.exceptions.ConnectionError:
-        print("Offline Mode")
+    except requests.exceptions.ConnectionError as e:
         online = False
+        error = e
+
+    if not online:
+        return (None, f"Unable to connect to back-end API to create an account! Error: {error}")
 
     if os.path.exists(Path(PROFILES_DIR, str(name))):
-        print("User already exists!")
-        return None
+        return (None, "User already exists!")
 
-    return {"profile": Profile(name, password),
-            "api_key": api_key if online else None}
+    return ({"profile": Profile(name, password), "api_key": api_key if online else None}, "Successfully Signed Up!")
 
-def login(name: str, password: str) -> dict | None:
+def login(name: str, password: str) -> (dict, str) or (None, str):
         headers = {'Content-Type': 'application/json'}
         data = { 'name': name, 'password': password }
         api = "http://127.0.0.1:5000" # local host
@@ -80,20 +81,13 @@ def login(name: str, password: str) -> dict | None:
                 correct = profile['password'] == sha256(password.encode('utf-8')).hexdigest()
                 
                 if correct:
-                    print("Succesfully logged in!")
-                    return {"profile": Profile(name, password, 
+                    return ({"profile": Profile(name, password, 
                                             path=Path(PROFILES_DIR, str(name)), exist=True), 
-                            "api_key": api_key if online else None}
+                            "api_key": api_key if online else None}, "Succesfully logged in!")
                 else:
-                    print("Password is incorrect!")
-                    return None
+                    return (None, "Password is incorrect!")
         else:
-            print("User does not exist!")
-            if str(input("Create as new user? ") or "n")[0].lower() == "y":
-                return {"profile": signUp(name, password, check=False), 
-                        "api_key": api_key if online else None}
-            else: 
-                return None
+            return (None, "User does not exist!")
 
 
 def createQuiz(
