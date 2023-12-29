@@ -16,12 +16,12 @@ API_KEYS_DIR = Path(Path(__file__).parent, "src", "valid_api_keys.json")
 with open(API_KEYS_DIR, "r") as f:
     VALID_KEYS = json.loads(f.read())
 
+infinite_sessions = {}
 oauth = OAuth2Provider(app)  # Instantiate OAuth2Provider
 
 talisman = Talisman(
     app, content_security_policy={"default-src": "'self'"}, force_https=True
 )
-
 
 # API key authentication middleware
 def api_key_auth():
@@ -82,7 +82,7 @@ def get_score():
     with open(Path(auth.PROFILES_DIR, VALID_KEYS[request.headers.get("X-API-Key")] + ".json"), "r") as f:
         return jsonify({"score": json.loads(f.read())["points"]}), 201
 
-@app.route("/render_quiz", methods=["GET"])
+@app.route("/render_infinite_quiz", methods=["GET"])
 def render_quiz():
     api_key_auth()
     data = request.get_json()
@@ -108,6 +108,95 @@ def render_leaderboard():
         leaderboard = json.loads(f.read())
     return jsonify(data=leaderboard), 200
 
+@app.route("/start_infinite_quiz", methods=["POST", "OPTIONS"])
+def start_infinite_quiz():
+
+    if request.method == "OPTIONS":
+        # Handle OPTIONS request
+        response = jsonify({"status": 200})
+        response.headers.add("Allow", "POST")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+        return response
+
+    api_key_auth()
+    data = request.get_json()
+    expected = ["questions", "lives"]
+    if not (list(data) == expected):
+        return jsonify({"error": "Invalid request, missing expected parameter"}), 400
+    
+    global infinite_sessions
+    infinite_sessions[request.headers.get("X-API-Key")] = data
+    return jsonify({"status": "Infinite Quiz Ready"}), 200
+
+@app.route("/expand_infinite_quiz", methods=["POST", "OPTIONS"])
+def expand_infinite_quiz():
+    if request.method == "OPTIONS":
+        # Handle OPTIONS request
+        response = jsonify({"status": "success"})
+        response.headers.add("Allow", "POST")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+        return response
+
+    # Handle actual POST request
+    api_key_auth()
+    data = request.get_json()
+    expected = ["questions"]
+    if not (list(data) == expected):
+        return jsonify({"error": "Invalid request, missing expected parameter"}), 400
+    
+    global infinite_sessions
+    infinite_sessions[request.headers.get("X-API-Key")]["questions"].append(data)
+    return jsonify({"status": "Quiz Appended"}), 200
+    
+@app.route("/answer_infinite_quiz", methods=["POST", "OPTIONS"])
+def answer_infinite_quiz():
+    if request.method == "OPTIONS":
+        # Handle OPTIONS request
+        response = jsonify({"status": "success"})
+        response.headers.add("Allow", "POST")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+        return response
+
+    # Handle actual POST request
+    api_key_auth()
+    data = request.get_json()
+    expected = ["selected"]
+    if not (list(data) == expected):
+        return jsonify({"error": "Invalid request, missing expected parameter"}), 400
+    
+    api_key = request.headers.get("X-API-Key")
+    global infinite_sessions
+    question = infinite_sessions[api_key]["questions"][0]
+    user = VALID_KEYS[api_key]
+
+    del infinite_sessions[api_key]["questions"][0]
+
+    if question["correct_answer"] == data["selected"]: 
+        with open(Path(auth.PROFILES_DIR, user + ".json"), "r+") as teams:
+            user_info = json.loads(teams.read())
+            user_info["points"] += 1
+
+            teams.seek(0)
+            teams.write(json.dumps(user_info))
+            teams.truncate()
+
+        with open(Path(auth.DEFAULT_DIR, "teams.json"), "r+") as teams:
+            team = json.loads(teams.read())
+            team[user_info["team"]]["points"] += 1
+
+            teams.seek(0)
+            teams.write(json.dumps(team))
+            teams.truncate()
+            
+        return jsonify({"status":"Correct Answer", "lives": infinite_sessions[api_key]["lives"]}), 200
+    
+    infinite_sessions[api_key]["lives"] -= 1
+    return jsonify({"status":"Wrong Answer", "lives": infinite_sessions[api_key]["lives"]}), 200
+    
+    
 @app.route("/start_quiz", methods=["POST", "OPTIONS"])
 def start_quiz():
 

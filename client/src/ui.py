@@ -8,6 +8,7 @@ import os
 import requests
 from src.main import login, signUp, createQuiz
 import html
+from threading import Thread
 from PyQt5.QtCore import QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap, QColor, QFontDatabase, QCursor
 from PyQt5.QtWidgets import (
@@ -61,7 +62,7 @@ class Window(QMainWindow):
             QStackedLayout()
         )  # Create a stacked layout to manage pages
         #self.stacked_layout.addWidget(self._create_main_page())
-        self.stacked_layout.addWidget(self._create_signup_page())
+        self.stacked_layout.addWidget(self._create_login_page())
 
         central_widget = QWidget()
         central_widget.setLayout(self.stacked_layout)
@@ -73,8 +74,9 @@ class Window(QMainWindow):
             central_widget.setStyleSheet(self.css)
 
 
-    def _create_generate_quizzes_page(self) -> QWidget:
+    def _init_generate_quizzes_page(self) -> QWidget:
         main = QWidget()
+        self.setWindowTitle("Quizzy - Generate Quiz")
         main.setObjectName("generate-quizzes-page")
     
         frame = QHBoxLayout()
@@ -127,6 +129,7 @@ class Window(QMainWindow):
         self.spinbox.setObjectName("input-field")
         self.spinbox.setMinimum(1)
         self.spinbox.setMaximum(50)
+        self.spinbox.setValue(10)
 
         ui_layout.addStretch(1)
         ui_layout.addWidget(input_text)
@@ -156,6 +159,218 @@ class Window(QMainWindow):
         container = QWidget()
         container.setLayout(frame)
         return container
+    
+    def _init_infinite_quizzes_page(self) -> QWidget:
+        main = QWidget()
+        self.setWindowTitle("Quizzy - Infinite Quiz")
+        main.setObjectName("generate-quizzes-page")
+    
+        frame = QHBoxLayout()
+        main_layout = QVBoxLayout()
+
+        ui_layout = QVBoxLayout()
+        ui_layout.setSpacing(0)
+
+        heading = QLabel("Infinite Quiz")
+        heading.setObjectName("heading")
+        #ui_layout.addWidget(heading)
+
+        input_text = QLabel("Topic*")
+        input_text.setObjectName("input-text")
+
+        self.dropdown = QComboBox()
+        self.dropdown.setObjectName("input-field")
+        self.dropdown.addItems(list(Window.OPENTDB_API["categories"]))
+
+        ui_layout.addStretch(1)
+        ui_layout.addWidget(input_text)
+        ui_layout.addWidget(self.dropdown)
+
+        input_text = QLabel("Difficulty*")
+        input_text.setObjectName("input-text")
+
+        self.difficulty = QComboBox()
+        self.difficulty.setObjectName("input-field")
+        self.difficulty.addItems(list(Window.OPENTDB_API["difficulty"]))
+
+        ui_layout.addStretch(1)
+        ui_layout.addWidget(input_text)
+        ui_layout.addWidget(self.difficulty)
+
+        input_text = QLabel("Lives*")
+        input_text.setObjectName("input-text")
+
+        self.spinbox = QSpinBox()
+        self.spinbox.setObjectName("input-field")
+        self.spinbox.setMinimum(1)
+        self.spinbox.setMaximum(50)
+        self.spinbox.setValue(5)
+
+        ui_layout.addStretch(1)
+        ui_layout.addWidget(input_text)
+        ui_layout.addWidget(self.spinbox)
+
+
+        ui_layout.addStretch(2)
+        ui_layout.addWidget(self._quiz_type_widget())
+
+
+        ui_layout.addStretch(2)
+        signup = QPushButton("Start Session")
+        signup.setCursor(QCursor(Qt.PointingHandCursor))
+        signup.setObjectName("input-field")
+        signup.clicked.connect(self._start_infinite_quiz)
+        ui_layout.addWidget(signup)
+        main.setLayout(ui_layout)
+
+        main_layout.addStretch(1)
+        main_layout.addWidget(heading, alignment=Qt.AlignCenter)
+        main_layout.addWidget(main)
+        main_layout.addStretch(1)
+
+        frame.addStretch(1)
+        frame.addLayout(main_layout)
+        frame.addStretch(1)
+
+        container = QWidget()
+        container.setLayout(frame)
+        return container
+    
+    def _start_infinite_quiz(self, expand: bool = False):
+        self.setWindowTitle("Quizzy - Infinite Quiz")
+
+        try:
+
+            params = {
+                "amount": 10,
+                "category": Window.OPENTDB_API["categories"][self.dropdown.currentText()],
+                "difficulty": Window.OPENTDB_API["difficulty"][self.difficulty.currentText()],
+                "type": Window.OPENTDB_API["type"][[i for i in self.quiz_type if self.quiz_type[i] == "active"][0]]
+            }
+
+            url = "https://opentdb.com/api.php"
+            response = requests.get(url, params=params)
+            headers = {"X-API-Key": self.api_key, 'Content-Type': 'application/json'}
+
+            if not expand:
+                url = f"{self.api}/start_infinite_quiz"
+                self.live_session = {"questions": response.json()["results"]} | {"lives": self.spinbox.value()}
+                session = self.live_session
+            else:
+                url = f"{self.api}/expand_infinite_quiz"
+                session = {"questions": response.json()["results"]}
+
+            response = requests.post(url, data=json.dumps(session), headers=headers)
+
+            if "status" in response.json():
+                if not expand:
+                    self.main_layout.addWidget(self._infinite_quiz_page())
+                    self.main_layout.setCurrentIndex(2)
+                else:
+                    self.live_session["questions"].append(session["questions"])
+            else:
+                raise requests.exceptions.ConnectionError(response.json()["error"])
+
+        except requests.exceptions.ConnectionError as e: 
+            QMessageBox.warning(
+                self, "Generate Quiz", 
+                f"An error occured while starting session: {e}")
+            self._back_to_main()
+
+    def _infinite_quiz_page(self) -> QWidget:
+        page = QWidget()
+        main_layout = QGridLayout()
+        self.quiz_main = QStackedLayout()
+
+        self.score = 0
+    
+        self.quiz_main.addWidget(self._infinite_question_ui())
+        main_layout.addLayout(self.quiz_main, 2, 2)
+        page.setLayout(main_layout)
+        return page
+    
+    def _infinite_question_ui(self) -> QWidget:
+        question_ui = QWidget()
+
+        main_layout = QVBoxLayout()
+        main_layout.addWidget(self._question_ui_nav(infinite=True))
+
+        question = self.live_session["questions"][0]
+
+        main_layout.addWidget(QQuestions(question["question"], css="quiz.css"))
+
+        options_layout = QGridLayout()
+        options_layout.setHorizontalSpacing(0)
+        options_layout.setVerticalSpacing(0)
+
+        options = question["incorrect_answers"] + [question["correct_answer"]]
+        random.shuffle(options)
+
+        positions = (
+            [(0, 0), (1, 0), (1, 1), (0, 1)]
+            if question["type"] == "multiple"
+            else [(0, 0), (1, 0)]
+        )
+
+        for index, pos in enumerate(positions):
+            option = options[index]
+            button = QQuestions(option, css="questions.css")
+            #button.setStyleSheet(f"border: 1px solid {colours[index]};")
+            button.clicked.connect(
+                partial(
+                    self._infinite_question_option_clicked, option, question["correct_answer"]
+                )
+            )
+            options_layout.addWidget(button, pos[0], pos[1])
+
+        questions_box = QHBoxLayout()
+
+        questions_box.addLayout(options_layout)
+
+        main_layout.addLayout(questions_box)
+        question_ui.setLayout(main_layout)
+
+        return question_ui
+        
+    def _infinite_question_option_clicked(self, selected: str, correct_answer: str):
+        if self.api_key:
+            headers = {"X-API-Key": self.api_key, 'Content-Type': 'application/json'}
+            data = {'selected': selected }
+            response = requests.post(f'{self.api}/answer_infinite_quiz', data=json.dumps(data), headers=headers)
+
+            if "status" in response.json():
+                status = response.json()["status"]
+                self.live_session["lives"] = response.json()["lives"]
+            else:
+                raise requests.exceptions.ConnectionError(response.json()["error"])
+            
+            if "correct" in status.lower():
+                self.user_score += 1
+                self.points_display.setText(f"{self.user_score} points")
+                
+        del self.live_session["questions"][0]
+        if 5 >= len(self.live_session["questions"]):
+            thread = Thread(target=self._start_infinite_quiz, args=(True,))
+            thread.start()
+
+        if selected == correct_answer:
+            QMessageBox.information(
+                self, "Right Answer", "Congratulations! Your answer is correct."
+            )
+            self.score += 1
+        else:
+            QMessageBox.warning(self, "Wrong Answer", "Oops! Your answer is incorrect.")
+
+        first_widget = self.quiz_main.widget(0)
+        self.quiz_main.removeWidget(first_widget)
+        first_widget.deleteLater()
+
+        if self.live_session["lives"] <= 0:
+            self.quiz_main.addWidget(self._quiz_summary(infinite=True))
+        else:
+            self.quiz_main.addWidget(
+                self._infinite_question_ui()
+            )
 
     def switch_quiz_type(self, index: int) -> None:
         self.quiz_type = {item: "active" if index == i else "inactive" 
@@ -217,6 +432,7 @@ class Window(QMainWindow):
 
     def _create_login_page(self) -> QWidget:
         main = QWidget()
+        self.setWindowTitle("Quizzy - Log In")
         main.setObjectName("login-page")
 
         frame = QHBoxLayout()
@@ -308,6 +524,7 @@ class Window(QMainWindow):
 
     def _create_signup_page(self) -> QWidget:
             main = QWidget()
+            self.setWindowTitle("Quizzy - Sign Up")
             main.setObjectName("signin-page")
 
             frame = QHBoxLayout()
@@ -406,6 +623,7 @@ class Window(QMainWindow):
     def _create_main_page(self) -> QWidget:
         """Create the main page of the application"""
         self.main_page = QWidget()
+        self.setWindowTitle("Quizzy - Home")
 
         self.main_page.setObjectName("body")
         main_layout = QVBoxLayout()
@@ -441,11 +659,11 @@ class Window(QMainWindow):
         menu_layout = QGridLayout()
         nav = {"Quiz Me!": {"onclick": self._init_quizzespage,
                             "description": "Challenge yourself to a quiz from your local files."}, 
-               "Generate Quizzes!": {"onclick": self._create_generate_quizzes_page,
+               "Generate Quizzes!": {"onclick": self._init_generate_quizzes_page,
                                      "description":"Quickly and easily generate quizzes to play."}, 
                "Leaderboards": {"onclick": self._init_leaderboards,
                                 "description": "Check out which house has the most points."}, 
-               "Infinity Mode": {"onclick": self._init_quizzespage,
+               "Infinity Mode": {"onclick": self._init_infinite_quizzes_page,
                                  "description":"Play quizzes infinitely without limit."}}
         
         stylepath = Path(Path(__file__).parent, "styles", "card.css")
@@ -475,6 +693,7 @@ class Window(QMainWindow):
     
     def _init_quizzespage(self) -> QWidget:
         main = QWidget()
+        self.setWindowTitle("Quizzy - Local Quizzes")
         
         main_layout = QHBoxLayout()
         section_layout = QVBoxLayout()
@@ -500,6 +719,7 @@ class Window(QMainWindow):
     
     def _leaderboards_ui(self) -> QWidget:
         main = QWidget()
+        self.setWindowTitle("Quizzy - Leaderboard")
         main.setObjectName("leaderboard")
         layout = QVBoxLayout()
 
@@ -537,8 +757,6 @@ class Window(QMainWindow):
 
         section_layout.addStretch(1)
         section_layout.addWidget(heading, alignment=Qt.AlignCenter)
-
-        
 
         section_layout.addWidget(self._leaderboards_ui())
         section_layout.addStretch(1)
@@ -653,7 +871,7 @@ class Window(QMainWindow):
         item.setObjectName("recents-item")
         return item
 
-    def _quiz_page(self, title: str):
+    def _quiz_page(self, title: str) -> QWidget:
         page = QWidget()
         main_layout = QGridLayout()
         self.quiz_main = QStackedLayout()
@@ -667,10 +885,8 @@ class Window(QMainWindow):
             data = { 'quiz_name': title, 'quiz': quiz_data }
             response = requests.post(f'{self.api}/start_quiz', data=json.dumps(data), headers=headers)
             status = response.json()["status"]
-            print(status)
 
         questions = quiz_data["results"]
-        print(questions[0])
 
         self.score = 0
         self.question_index = 0
@@ -683,12 +899,15 @@ class Window(QMainWindow):
         page.setLayout(main_layout)
         return page
 
-    def _quiz_summary(self) -> QWidget:
+    def _quiz_summary(self, infinite: bool = False) -> QWidget:
         summary_ui = QWidget()
 
         main_layout = QVBoxLayout()
 
-        score = QLabel(f"You scored {self.score}/{len(self.active_quiz)}.")
+        if not infinite:
+            score = QLabel(f"You scored {self.score}/{len(self.active_quiz)}.")
+        else:
+            score = QLabel(f"You scored {self.score}.")
         main_layout.addWidget(score)
 
         back = QPushButton(f"Back")
@@ -700,6 +919,7 @@ class Window(QMainWindow):
         return summary_ui
 
     def _back_to_main(self):
+        self.setWindowTitle("Quizzy - Home")
         for _ in range(self.main_layout.count() - 1, 0, -1):
             widget = self.main_layout.widget(_)
             self.main_layout.removeWidget(widget)
@@ -732,7 +952,7 @@ class Window(QMainWindow):
 
         #     # update main page
 
-    def _question_ui_nav(self) -> QWidget:
+    def _question_ui_nav(self, infinite: bool = False) -> QWidget:
         widget = QWidget()
         layout = QHBoxLayout()
 
@@ -742,7 +962,10 @@ class Window(QMainWindow):
 
         layout.addWidget(back)
         layout.addStretch()
-        layout.addWidget(QLabel(f"{self.score}/{len(self.active_quiz)}"))
+        if not infinite:
+            layout.addWidget(QLabel(f"{self.score}/{len(self.active_quiz)}"))
+        else:
+            layout.addWidget(QLabel(f"Score: {self.score} Lives: {self.live_session['lives']}"))
 
         widget.setLayout(layout)
         return widget
@@ -774,8 +997,6 @@ class Window(QMainWindow):
             if question["type"] == "multiple"
             else [(0, 0), (1, 0)]
         )
-
-        colours = ['red', 'blue', 'green', 'yellow']
 
         for index, pos in enumerate(positions):
             option = options[index]

@@ -1,13 +1,13 @@
 {
     "categories": {
         "General Knowledge": 9,
-        "Entertainment: Books": 10,
-        "Entertainment: Film": 11,
-        "Entertainment: Music": 12,
-        "Entertainment: Musicals & Theatres": 13,
-        "Entertainment: Television": 14,
-        "Entertainment: Video Games": 15,
-        "Entertainment: Board Games": 16,
+        "Books": 10,
+        "Film": 11,
+        "Music": 12,
+        "Musicals & Theatres": 13,
+        "Television": 14,
+        "Video Games": 15,
+        "Board Games": 16,
         "Science & Nature": 17,
         "Science: Computers": 18,
         "Science: Mathematics": 19,
@@ -20,10 +20,10 @@
         "Celebrities": 26,
         "Animals": 27,
         "Vehicles": 28,
-        "Entertainment: Comics": 29,
+        "Comics": 29,
         "Science: Gadgets": 30,
-        "Entertainment: Japanese Anime & Manga": 31,
-        "Entertainment: Cartoon & Animations": 32
+        "Japanese Anime & Manga": 31,
+        "Cartoon & Animations": 32
     },
     "difficulty": {
        "Easy": "easy",

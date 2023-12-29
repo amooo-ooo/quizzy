@@ -39,24 +39,3 @@ def login(name: str, password: str) -> (str, str | None):
     else:
         return "User does not exist!", None
 
-def createQuiz(
-    path: Path, amount: int = 10, category: str = "General Knowledge", difficulty: int = 0, type: int = 0, 
-    name: str = ''.join(['abcdefghijklmnopqrztuvwxyz'[random.randint(0, 25)] for _ in range(6)]),
-) -> None:
-    
-    params = {
-        "amount": amount,
-        "category": OPENTDB_API["categories"][category],
-        "difficulty": OPENTDB_API["difficulty"][difficulty],
-        "type": OPENTDB_API["type"][type]
-    }
-
-    url = "https://opentdb.com/api.php"
-    response = requests.get(url, params=params)
-
-    if response.status_code == 200:
-        with open(Path(path, "local", name + ".json"), "w") as f:
-            f.write(json.dumps(response.json()))
-            print("New Quiz pack created successfully!")
-    else:
-        print(f"Failed to fetch API. Status code: {response.status_code}")
