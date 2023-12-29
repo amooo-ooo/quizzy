@@ -156,12 +156,21 @@ class Window(QMainWindow):
         container = QWidget()
         container.setLayout(frame)
         return container
+
+    def switch_quiz_type(self, index: int) -> None:
+        self.quiz_type = {item: "active" if index == i else "inactive" 
+                          for i, item in enumerate(list(Window.OPENTDB_API["type"]))}
+       
+        for i, item in enumerate(self.quiz_type):
+            widget = self.quiz_type_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.setStyleSheet(self.modes[self.quiz_type[item]])
     
     def _quiz_type_widget(self) -> QWidget:
         self.quiz_type = {item: "active" if index == 0 else "inactive" 
                           for index, item in enumerate(list(Window.OPENTDB_API["type"]))}
 
-        modes = {
+        self.modes = {
             "active": "background-color: #000000; color: #FFFFFF;",
             "inactive": "background-color: transparent; color: #000000;"
         }
@@ -170,17 +179,19 @@ class Window(QMainWindow):
         container.setContentsMargins(18, 0, 18, 0)
         container.setObjectName("select-type")
 
-        layout = QHBoxLayout()
-        layout.setSpacing(0)
-        layout.setContentsMargins(0, 0, 0, 0)
+        self.quiz_type_layout = QHBoxLayout()
+        self.quiz_type_layout.setSpacing(0)
+        self.quiz_type_layout.setContentsMargins(0, 0, 0, 0)
 
-        for i in self.quiz_type:
-            button = QPushButton(i)
+        for i, item in enumerate(self.quiz_type):
+            button = QPushButton(item)
             button.setObjectName("select-type-button")
-            button.setStyleSheet(modes[self.quiz_type[i]])
-            layout.addWidget(button)
+            button.setStyleSheet(self.modes[self.quiz_type[item]])
+            button.setCursor(QCursor(Qt.PointingHandCursor))
+            button.clicked.connect(partial(self.switch_quiz_type, i))
+            self.quiz_type_layout.addWidget(button)
 
-        container.setLayout(layout)
+        container.setLayout(self.quiz_type_layout)
         container.setStyleSheet(self.css)
         return container
 
