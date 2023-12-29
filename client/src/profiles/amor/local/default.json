@@ -1,0 +1,126 @@
+{
+    "response_code": 0,
+    "category": "General Knowledge",
+    "results": [
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "Which of the following is not the host of a program on NPR?",
+            "correct_answer": "Ben Shapiro",
+            "incorrect_answers": [
+                "Terry Gross",
+                "Ira Glass",
+                "Peter Sagal"
+            ]
+        },
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "The Canadian $1 coin is colloquially known as a what?",
+            "correct_answer": "Loonie",
+            "incorrect_answers": [
+                "Boolie",
+                "Foolie",
+                "Moodie"
+            ]
+        },
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "What do the letters of the fast food chain KFC stand for?",
+            "correct_answer": "Kentucky Fried Chicken",
+            "incorrect_answers": [
+                "Kentucky Fresh Cheese",
+                "Kibbled Freaky Cow",
+                "Kiwi Food Cut"
+            ]
+        },
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "On a dartboard, what number is directly opposite No. 1?",
+            "correct_answer": "19",
+            "incorrect_answers": [
+                "20",
+                "12",
+                "15"
+            ]
+        },
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "How many furlongs are there in a mile?",
+            "correct_answer": "Eight",
+            "incorrect_answers": [
+                "Two",
+                "Four",
+                "Six"
+            ]
+        },
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "Which country, not including Japan, has the most people of japanese decent?",
+            "correct_answer": "Brazil",
+            "incorrect_answers": [
+                "China",
+                "South Korea",
+                "United States of America"
+            ]
+        },
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "In which fast food chain can you order a Jamocha Shake?",
+            "correct_answer": "Arby&#039;s",
+            "incorrect_answers": [
+                "McDonald&#039;s",
+                "Burger King",
+                "Wendy&#039;s"
+            ]
+        },
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "In past times, what would a gentleman keep in his fob pocket?",
+            "correct_answer": "Watch",
+            "incorrect_answers": [
+                "Money",
+                "Keys",
+                "Notebook"
+            ]
+        },
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "What does a funambulist walk on?",
+            "correct_answer": "A Tight Rope",
+            "incorrect_answers": [
+                "Broken Glass",
+                "Balls",
+                "The Moon"
+            ]
+        },
+        {
+            "type": "multiple",
+            "difficulty": "easy",
+            "category": "General Knowledge",
+            "question": "When someone is inexperienced they are said to be what color?",
+            "correct_answer": "Green",
+            "incorrect_answers": [
+                "Red",
+                "Blue",
+                "Yellow"
+            ]
+        }
+    ]
+}

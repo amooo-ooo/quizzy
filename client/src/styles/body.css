@@ -1,0 +1,100 @@
+#body { 
+    /* background-image: url("src/wallpaper.jpg"); */
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #fafafa;
+}
+
+QScrollArea {
+    background-color: transparent;
+    border: none;
+    border-color: transparent;
+    min-height: 255px;
+}
+
+#logo {
+    background-color: transparent;
+    border: none;
+}
+
+#cards-scroll {
+    background-color: transparent;
+}
+
+#recents-item {
+    background-color: #FFFFFF;
+    border: 1px solid #CCCCCC;
+    border-radius: 6px;
+    min-height: 38px;
+}
+
+#heading {
+    font-size: 24pt;
+    font-family: "Aspekta";
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+#quiz-display {
+    min-width: 950px;
+}
+
+#login-page, #signin-page, #generate-quizzes-page {
+    padding: 32px;
+    border: 1px solid black;
+    border-radius: 6px;
+    font-family: "Aspekta";
+}
+
+#login-page {
+    min-height: 250px;
+}
+
+#signin-page {
+    min-height: 300px;
+}
+
+#generate-quizzes-page {
+    min-height: 360px;
+}
+
+#input-field {
+    background-color: transparent;
+    border: 1px solid black;
+    font-family: "Aspekta";
+    border-radius: 6px;
+    margin: 0 18px;
+    padding: 8px 12px;
+    min-width: 335px;
+    font-size: 10pt;
+}
+
+#input-text {
+    background-color: transparent;
+    font-size: 12pt;
+    font-family: "Aspekta";
+    margin: 0 18px;
+    margin-bottom: 8px;
+    max-height: 32px;
+}
+
+#select-type {
+    margin: 0 18px;
+    border-radius: 6px;
+    border: 1px solid #000000;
+    /*max-height: 32px;*/
+}
+
+#select-type-button {
+    margin: 0;
+    border-radius: 6px;
+    min-height: 32px;
+    font-family: "Aspekta";
+}
+
+#link {
+    background-color: transparent;
+    border: none;
+    text-decoration: underline;
+    margin-top: 10px;
+}

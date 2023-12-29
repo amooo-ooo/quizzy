@@ -1,0 +1,67 @@
+#card-frame {
+
+    background-color: #FFFFFF;
+    border: 1px solid #CCCCCC;
+    border-radius: 12px;
+    margin: 0;
+}
+
+#card-frame:hover {
+    border: 1px solid #007BFF;
+    margin: 0;
+}
+
+#QCard {
+    min-height: 76px;
+    min-width: 390px;
+    background-color: #FFFFFF;
+    border: 1px solid black;
+    border-radius: 12px;
+    margin: 0;
+}
+
+#QCard:hover {
+    border: 1px solid #007BFF;
+}
+
+QWidget {
+    margin: 4px;
+}
+
+#title {
+    font-size: 13pt;
+    font-family: "Aspekta";
+    line-height: 13pt;
+    margin-bottom: 1px;
+    font-weight: 500;
+}
+
+#description {
+    font-family: "Aspekta";
+    min-width: 280px;
+    margin-top: 0;
+}
+
+#card-frame QLabel {
+    /*margin: 16px 20px;*/
+    margin: 0;
+    font-family: Arial;
+    background-color: transparent;
+    min-width: 144px;
+    min-height: 90px;
+}
+
+#card-title {
+    font-size: 17pt;
+}
+
+#card-desc {
+    font-size: 13pt;
+}
+
+#input-field {
+    background-color: #FFFFFF;
+    border: 1px solid black;
+    border-radius: 12px;
+    margin: 0;
+}

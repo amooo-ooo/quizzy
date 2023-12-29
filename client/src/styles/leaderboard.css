@@ -1,0 +1,24 @@
+#title {
+    font-size: 13pt;
+    font-family: "Aspekta";
+    line-height: 13pt;
+}
+
+#points {
+    font-size: 13pt;
+    font-family: "Aspekta";
+    line-height: 13pt;
+}
+
+#colour-widget {
+    min-width: 14px; min-height: 14px;
+    margin: 7px 14px 7px 7px;
+    border-radius: 7px;
+}
+
+#leaderboard-container {
+    min-width: 475px;
+    border: 1px solid #000000;
+    border-radius: 12px;
+    margin: 0;
+}

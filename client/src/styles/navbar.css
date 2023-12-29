@@ -1,0 +1,14 @@
+#navbar {
+    max-height: 80px;
+}
+
+#search {
+    min-height: 40px;
+    border-radius: 20px;
+    padding: 0px 16px;
+}
+
+#navbar-points {
+    font-family: "Aspekta";
+    font-size: 14pt;
+}

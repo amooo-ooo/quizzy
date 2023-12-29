@@ -1,0 +1,15 @@
+QWidget {
+    background-color: #FFFFFF;
+    border: 1px solid #CCCCCC;
+    border-radius: 6px;
+}
+
+QWidget:hover {
+    border: 1px solid #007BFF;
+}
+
+QWidget QLabel {
+    padding: 20px;
+    font-family: Arial;
+    font-size: 26pt;
+}
