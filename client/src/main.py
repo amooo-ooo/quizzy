@@ -113,7 +113,8 @@ def createQuiz(
 
     if response.status_code == 200:
         with open(Path(path, "local", name + ".json"), "w") as f:
-            f.write(json.dumps(response.json()))
+            js = response.json()
+            f.write(json.dumps(js | {"category": js["results"][0]["category"]}))
             print("New Quiz pack created successfully!")
     else:
         print(f"Failed to fetch API. Status code: {response.status_code}")

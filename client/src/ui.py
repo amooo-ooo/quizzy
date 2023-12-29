@@ -6,8 +6,8 @@ import json
 import sys
 import os
 import requests
-from src.main import login, signUp
-
+from src.main import login, signUp, createQuiz
+import html
 from PyQt5.QtCore import QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap, QColor, QFontDatabase, QCursor
 from PyQt5.QtWidgets import (
@@ -123,14 +123,14 @@ class Window(QMainWindow):
         input_text = QLabel("Number of Questions*")
         input_text.setObjectName("input-text")
 
-        self.number_of_questions = QSpinBox()
-        self.number_of_questions.setObjectName("input-field")
-        self.number_of_questions.setMinimum(1)
-        self.number_of_questions.setMaximum(50)
+        self.spinbox = QSpinBox()
+        self.spinbox.setObjectName("input-field")
+        self.spinbox.setMinimum(1)
+        self.spinbox.setMaximum(50)
 
         ui_layout.addStretch(1)
         ui_layout.addWidget(input_text)
-        ui_layout.addWidget(self.number_of_questions)
+        ui_layout.addWidget(self.spinbox)
 
         ui_layout.addStretch(2)
         ui_layout.addWidget(self._quiz_type_widget())
@@ -140,7 +140,7 @@ class Window(QMainWindow):
         signup = QPushButton("Generate Quiz")
         signup.setCursor(QCursor(Qt.PointingHandCursor))
         signup.setObjectName("input-field")
-        signup.clicked.connect(self._back_to_main)
+        signup.clicked.connect(self._generate_quiz)
         ui_layout.addWidget(signup)
         main.setLayout(ui_layout)
 
@@ -194,6 +194,26 @@ class Window(QMainWindow):
         container.setLayout(self.quiz_type_layout)
         container.setStyleSheet(self.css)
         return container
+    
+    def _generate_quiz(self) -> None:
+        try:
+            createQuiz(self.user.path, 
+                       self.spinbox.value(), 
+                       self.dropdown.currentText(),
+                       self.difficulty.currentText(),
+                       [i for i in self.quiz_type if self.quiz_type[i] == "active"][0],
+                       self.name_input.text())
+            
+            QMessageBox.information(
+                self, "Generate Quiz", 
+                f"{self.name_input.text()} successfully created!"
+            )
+        except requests.exceptions.ConnectionError as e: 
+            QMessageBox.warning(
+                self, "Generate Quiz", 
+                f"An error occured while generating {self.name_input.text()}: {e}")
+
+        self._back_to_main()
 
     def _create_login_page(self) -> QWidget:
         main = QWidget()
@@ -840,7 +860,7 @@ class QCover(QWidget):
         return QLabel()
     
     def _title(self):
-        label = QLabel(self.title.upper())
+        label = QLabel(html.unescape(self.title.upper()))
         label.setObjectName("card-title")
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignBottom)
@@ -849,7 +869,7 @@ class QCover(QWidget):
     def _desc(self):
         with open(Path(self.user.path, "local", self.title + ".json"), "r") as f:
             category = json.loads(f.read())["category"].upper()
-        label = QLabel(category)
+        label = QLabel(html.unescape(category))
         label.setObjectName("card-desc")
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignTop)
@@ -899,7 +919,7 @@ class QQuestions(QWidget):
         self.title = title
         self.setObjectName("card")
 
-        label = QLabel(title)
+        label = QLabel(html.unescape(title))
         label.setWordWrap(True)
         label.setAlignment(Qt.AlignCenter)
         card_layout.addWidget(label)
@@ -972,12 +992,12 @@ class QCard(QWidget):
 
         card_layout.addStretch(1)
 
-        title_label = QLabel(title)
+        title_label = QLabel(html.unescape(title))
         title_label.setObjectName("title")
         card_layout.addWidget(title_label, alignment=Qt.AlignBottom)
 
         if description: 
-            desc_label = QLabel(description)
+            desc_label = QLabel(html.unescape(description))
             desc_label.setWordWrap(True)
             desc_label.setObjectName("description")
             card_layout.addWidget(desc_label, alignment=Qt.AlignTop)
