@@ -394,8 +394,8 @@ class Window(QMainWindow):
         }
 
         self.modes = {
-            "active": "background-color: 
-            "inactive": "background-color: transparent; color: 
+            "active": "background-color: #000000; color: #FFFFFF" ,  
+            "inactive": "background-color: transparent; color: #000000"
         }
 
         container = QWidget()
