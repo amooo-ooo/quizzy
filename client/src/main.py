@@ -14,6 +14,7 @@ PROFILES_DIR = Path(DEFAULT_DIR, "profiles")
 
 
 class Profile:
+    """Profile class"""
     def __init__(
         self, name: str, password: str, path: Path = None, exist: bool = False
     ):
@@ -26,51 +27,56 @@ class Profile:
             self.path = path
 
     def setup_dir(self) -> Path:
+        """Setup directory if user is new"""
         profile = {"name": self.name, "password": self.password}
 
         self.path = Path(PROFILES_DIR, self.name)
 
+        # make user info file
         os.makedirs(Path(self.path))
         with open(Path(self.path, "user.json"), "w") as f:
             f.write(json.dumps(profile))
 
+        # copy default sample quiz
         os.makedirs(Path(self.path, "local"))
-        with open(Path(self.path, "local", "default.json"), "w") as profile_quiz:
+        with open(Path(self.path, "local",
+                       "default.json"), "w") as profile_quiz:
             with open(Path(DEFAULT_DIR, "default.json"), "r") as default_quiz:
                 profile_quiz.write(default_quiz.read())
-
-        with open(Path(self.path, "recents.json"), "w") as user_recents:
-            with open(Path(DEFAULT_DIR, "recents.json"), "r") as default_recents:
-                user_recents.write(default_recents.read())
 
 
 def signUp(
     name: str, password: str, team: str, api: str = "http://127.0.0.1:5000"
 ) -> (dict, str) or (None, str):
+    """Sign up a new user"""
     headers = {"Content-Type": "application/json"}
     data = {"name": name, "password": password, "team": team}
 
     try:
+        # try signing up as  anew user
         response = requests.post(
             f"{api}/signup", data=json.dumps(data), headers=headers
         )
         api_key = response.json()["api_key"]
         online = True
     except requests.exceptions.ConnectionError as e:
+        # fail to connect to API
         online = False
         error = e
 
     if not online:
         return (
             None,
-            f"Unable to connect to back-end API to create an account! Error: {error}",
+            ("Unable to connect to back-end API " +
+             f"to create an account! Error: {error}"),
         )
 
     if os.path.exists(Path(PROFILES_DIR, str(name))):
         return (None, "User already exists!")
 
     return (
-        {"profile": Profile(name, password), "api_key": api_key if online else None},
+        {"profile": Profile(name, password),
+         "api_key": api_key if online else None},
         "Successfully Signed Up!",
     )
 
@@ -80,7 +86,8 @@ def login(name: str, password: str) -> (dict, str) or (None, str):
     data = {"name": name, "password": password}
     api = "http://127.0.0.1:5000"
     try:
-        response = requests.post(f"{api}/login", data=json.dumps(data), headers=headers)
+        response = requests.post(f"{api}/login",
+                                 data=json.dumps(data), headers=headers)
         api_key = response.json()["api_key"]
         online = True
     except requests.exceptions.ConnectionError:
@@ -90,8 +97,9 @@ def login(name: str, password: str) -> (dict, str) or (None, str):
     if os.path.exists(Path(PROFILES_DIR, str(name))):
         with open(Path(PROFILES_DIR, str(name), "user.json"), "r") as info:
             profile = json.loads(info.read())
+            passhash = sha256(password.encode("utf-8")).hexdigest()
             correct = (
-                profile["password"] == sha256(password.encode("utf-8")).hexdigest()
+                profile["password"] == passhash
             )
 
             if correct:
@@ -137,38 +145,11 @@ def createQuiz(
         with open(Path(path, "local", name + ".json"), "w") as f:
             js = response.json()
             f.write(
-                json.dumps(js | {"category": js["results"][0]["category"]}).replace(
+                json.dumps(js | {"category":
+                                 js["results"][0]["category"]}).replace(
                     "Entertainment: ", ""
                 )
             )
             print("New Quiz pack created successfully!")
     else:
         print(f"Failed to fetch API. Status code: {response.status_code}")
-
-
-def quiz(user):
-    print("\n".join(os.listdir(Path(user.path, "local"))))
-    file: str = input("select: ") or os.listdir(Path(user.path, "local"))[0]
-
-    with open(Path(user.path, "local", file), "r") as f:
-        quizzes = json.loads(f.read())["results"]
-
-    shuffled = random.sample(quizzes, len(quizzes))
-    points = 0
-    while bool(shuffled):
-        question = shuffled[0]["question"]
-        options = shuffled[0]["incorrect_answers"] + [shuffled[0]["correct_answer"]]
-        random.shuffle(options)
-
-        prompt: str = (
-            input(f"\n{question}\nOptions: {', '.join(options)}.\nGuess: ") or "pass"
-        )
-
-        if prompt.lower() == shuffled[0]["correct_answer"].lower():
-            print("Nice work!")
-            points += 1
-        else:
-            print(f"Ruh roh raggy! The answer was {shuffled[0]['correct_answer']}")
-        shuffled.pop(0)
-
-    print(f"You got {points}/{len(quizzes)} correct!")
